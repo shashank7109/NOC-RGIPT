@@ -6,7 +6,7 @@ const sendEmail = require('../utils/sendEmail');
 const submitApplication = async (req, res) => {
   try {
     const { 
-      departmentId, rollNumber, degreeCourse, branch, yearSession, latestCPI, contactNo, 
+      departmentId, rollNumber, degreeCourse, branch, currentYear, yearSession, latestCPI, contactNo, 
       internshipType, durationFrom, durationTo, companyName, organizationAddress,
       mentorName, mentorDesignation, mentorContact, mentorEmail,
       addresseeName, addresseeDesignation, addresseeContact, addresseeEmail,
@@ -16,6 +16,7 @@ const submitApplication = async (req, res) => {
     const offerLetter = req.files && req.files['offerLetter'] ? `uploads/${req.files['offerLetter'][0].filename}` : null;
     const statementOfObjective = req.files && req.files['statementOfObjective'] ? `uploads/${req.files['statementOfObjective'][0].filename}` : null;
     const mandatoryDocument = req.files && req.files['mandatoryDocument'] ? `uploads/${req.files['mandatoryDocument'][0].filename}` : null;
+    const nocFormat = req.files && req.files['nocFormat'] ? `uploads/${req.files['nocFormat'][0].filename}` : null;
 
     // Check for duplicates
     const exist = await Application.findOne({
@@ -28,12 +29,12 @@ const submitApplication = async (req, res) => {
 
     const application = await Application.create({
       studentId: req.user._id,
-      departmentId, rollNumber, degreeCourse, branch, yearSession, latestCPI, contactNo,
+      departmentId, rollNumber, degreeCourse, branch, currentYear, yearSession, latestCPI, contactNo,
       internshipType, durationFrom, durationTo, companyName, organizationAddress,
       mentorName, mentorDesignation, mentorContact, mentorEmail,
       addresseeName, addresseeDesignation, addresseeContact, addresseeEmail,
       status: 'SUBMITTED',
-      offerLetter, statementOfObjective, mandatoryDocument, studentMessage
+      offerLetter, statementOfObjective, mandatoryDocument, nocFormat, studentMessage
     });
 
     await ApplicationLog.create({
@@ -64,7 +65,8 @@ const submitApplication = async (req, res) => {
 
     res.status(201).json(application);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Submit Error:', error);
+    res.status(500).json({ message: error.message || 'Server error', error: error.message });
   }
 };
 

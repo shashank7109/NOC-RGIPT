@@ -8,6 +8,7 @@ const applicationSchema = new mongoose.Schema({
   rollNumber: { type: String, required: true },
   degreeCourse: { type: String, required: true },
   branch: { type: String, required: true },
+  currentYear: { type: String, enum: ['1st Year', '2nd Year', '3rd Year', '4th Year', '5th Year', 'Other'], required: true },
   yearSession: { type: String, required: true },
   latestCPI: { type: Number, required: true },
   contactNo: { type: String, required: true },
@@ -20,10 +21,10 @@ const applicationSchema = new mongoose.Schema({
   mentorDesignation: { type: String, required: true },
   mentorContact: { type: String, required: true },
   mentorEmail: { type: String, required: true },
-  addresseeName: { type: String, required: true },
-  addresseeDesignation: { type: String, required: true },
-  addresseeContact: { type: String, required: true },
-  addresseeEmail: { type: String, required: true },
+  addresseeName: { type: String, required: false },
+  addresseeDesignation: { type: String, required: false },
+  addresseeContact: { type: String, required: false },
+  addresseeEmail: { type: String, required: false },
 
   // Workflow tracking
   status: {
@@ -40,6 +41,7 @@ const applicationSchema = new mongoose.Schema({
   offerLetter: { type: String, required: false },
   statementOfObjective: { type: String, required: false },
   mandatoryDocument: { type: String, required: false },
+  nocFormat: { type: String, required: false },
   studentMessage: { type: String, default: '' },
   remarks: { type: String, default: '' },
 

@@ -46,7 +46,7 @@ const ExpandedDetails = ({ app }) => (
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <p className="text-sm font-bold text-slate-900">{app.studentId?.name}</p>
-            <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">{calculateStudentYear(app.rollNumber)}</span>
+            <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">{app.currentYear || calculateStudentYear(app.rollNumber)}</span>
           </div>
           <p className="text-xs text-slate-500">{app.studentId?.email}</p>
           <p className="text-xs font-medium text-indigo-600 bg-indigo-50 inline-block px-2 py-0.5 rounded">Roll: {app.rollNumber}</p>
@@ -117,6 +117,12 @@ const ExpandedDetails = ({ app }) => (
             Statement of Objective
           </a>
         )}
+        {app.nocFormat && (
+          <a href={formatFileUrl(app.nocFormat)} target="_blank" rel="noreferrer" className="inline-flex items-center px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all shadow-sm">
+            <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+            NOC Format
+          </a>
+        )}
       </div>
     </div>
 
@@ -125,14 +131,24 @@ const ExpandedDetails = ({ app }) => (
       <div className="space-y-2">
         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Internal Mentor</h4>
         <p className="text-sm font-bold text-slate-800">{app.mentorName}</p>
-        <p className="text-xs text-slate-500">{app.mentorDesignation} | {app.mentorEmail}</p>
+        <p className="text-xs text-slate-500">{app.mentorDesignation} | {app.mentorEmail} | {app.mentorContact}</p>
       </div>
       <div className="space-y-2">
         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Addressee (External)</h4>
-        <p className="text-sm font-bold text-slate-800">{app.addresseeName}</p>
-        <p className="text-xs text-slate-500">{app.addresseeDesignation} | {app.addresseeEmail}</p>
+        <p className="text-sm font-bold text-slate-800">{app.addresseeName || 'N/A'}</p>
+        <p className="text-xs text-slate-500">{app.addresseeDesignation || 'N/A'} | {app.addresseeEmail || 'N/A'} | {app.addresseeContact || '-'}</p>
       </div>
     </div>
+
+    {/* Application Remarks */}
+    {app.remarks && (
+      <div className="pt-6 border-t border-slate-200">
+        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Approver Remarks</h4>
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-700 font-medium italic">
+          "{app.remarks}"
+        </div>
+      </div>
+    )}
 
     {/* Timeline Audit */}
     <div className="pt-6 border-t border-slate-200">
@@ -187,7 +203,7 @@ const AppCard = ({ app, actionType, remarks, setRemarks, handleAction }) => {
               <span className="text-[10px] font-black uppercase tracking-widest text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100">{app.departmentId?.name}</span>
             </h3>
             <div className="flex items-center gap-2">
-              <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">{academicYear}</span>
+              <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">{app.currentYear || academicYear}</span>
               <p className="text-xs font-medium text-slate-500">Roll: <span className="text-slate-900 font-bold">{app.rollNumber || 'N/A'}</span></p>
             </div>
           </div>
@@ -228,6 +244,7 @@ const AppCard = ({ app, actionType, remarks, setRemarks, handleAction }) => {
           {app.mandatoryDocument && <a href={formatFileUrl(app.mandatoryDocument)} target="_blank" rel="noreferrer" className="inline-flex items-center font-bold text-rose-600 hover:text-rose-800 transition-colors"><svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> SOP/Marksheet</a>}
           {app.offerLetter && <a href={formatFileUrl(app.offerLetter)} target="_blank" rel="noreferrer" className="inline-flex items-center font-bold text-indigo-600 hover:text-indigo-800 transition-colors"><svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> Offer Letter</a>}
           {app.statementOfObjective && <a href={formatFileUrl(app.statementOfObjective)} target="_blank" rel="noreferrer" className="inline-flex items-center font-bold text-indigo-600 hover:text-indigo-800 transition-colors"><svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> Statement</a>}
+          {app.nocFormat && <a href={formatFileUrl(app.nocFormat)} target="_blank" rel="noreferrer" className="inline-flex items-center font-bold text-indigo-600 hover:text-indigo-800 transition-colors"><svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> NOC Format</a>}
         </div>
       </div>
 

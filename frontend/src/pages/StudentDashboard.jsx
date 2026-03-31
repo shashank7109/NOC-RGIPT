@@ -7,13 +7,13 @@ const ExpandedDetails = ({ app }) => (
     <div className="md:col-span-2 text-indigo-800 font-extrabold pb-2 border-b border-slate-200">Full Application Details</div>
     <div><strong className="text-slate-900">Student Name:</strong> {app.studentId?.name || 'N/A'}</div>
     <div><strong className="text-slate-900">Roll Number:</strong> {app.rollNumber}</div>
-    <div><strong className="text-slate-900">Course/Branch:</strong> {app.degreeCourse} in {app.branch} ({app.yearSession})</div>
+    <div><strong className="text-slate-900">Course/Branch:</strong> {app.degreeCourse} in {app.branch} {app.currentYear ? `(${app.currentYear}, ${app.yearSession})` : `(${app.yearSession})`}</div>
     <div><strong className="text-slate-900">Latest CPI & Contact:</strong> {app.latestCPI} | Ph: {app.contactNo}</div>
     <div className="md:col-span-2"><strong className="text-slate-900">Internship Type:</strong> {app.internshipType}</div>
     <div className="md:col-span-2"><strong className="text-slate-900">Org Address:</strong> {app.organizationAddress}</div>
 
     <div className="pt-4 mt-2 border-t border-slate-200">
-      <h4 className="font-extrabold text-slate-900 uppercase tracking-widest text-xs mb-2">Mentor Details</h4>
+      <h4 className="font-extrabold text-slate-900 uppercase tracking-widest text-xs mb-2">Contact Person/ Mentor / H.O.D. Details</h4>
       <p className="font-medium">{app.mentorName} ({app.mentorDesignation})</p>
       <p className="text-slate-500">{app.mentorEmail} | {app.mentorContact}</p>
     </div>
@@ -46,11 +46,11 @@ const StudentDashboard = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const [formData, setFormData] = useState({
-    departmentId: '', rollNumber: '', degreeCourse: 'B.Tech', branch: '', yearSession: '', latestCPI: '', contactNo: '',
+    departmentId: '', rollNumber: '', degreeCourse: 'B.Tech', branch: '', currentYear: '3rd Year', yearSession: '', latestCPI: '', contactNo: '',
     internshipType: 'Regular Internship (6 weeks duration)', durationFrom: '', durationTo: '',
     companyName: '', organizationAddress: '', mentorName: '', mentorDesignation: '', mentorContact: '', mentorEmail: '',
     addresseeName: '', addresseeDesignation: '', addresseeContact: '', addresseeEmail: '',
-    offerLetter: null, statementOfObjective: null, mandatoryDocument: null, studentMessage: ''
+    offerLetter: null, statementOfObjective: null, mandatoryDocument: null, nocFormat: null, studentMessage: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -113,18 +113,19 @@ const StudentDashboard = () => {
     if (formData.offerLetter) data.append('offerLetter', formData.offerLetter);
     if (formData.statementOfObjective) data.append('statementOfObjective', formData.statementOfObjective);
     if (formData.mandatoryDocument) data.append('mandatoryDocument', formData.mandatoryDocument);
+    if (formData.nocFormat) data.append('nocFormat', formData.nocFormat);
 
     try {
       await api.post('/student/apply', data, { headers: { 'Content-Type': 'multipart/form-data' } });
       alert('Application submitted successfully');
       setFormData({
         departmentId: departments.length > 0 ? departments[0]._id : '',
-        rollNumber: '', degreeCourse: 'B.Tech', branch: '', yearSession: '', latestCPI: '', contactNo: '',
+        rollNumber: '', degreeCourse: 'B.Tech', branch: '', currentYear: '3rd Year', yearSession: '', latestCPI: '', contactNo: '',
         internshipType: 'Regular Internship (6 weeks duration)', durationFrom: '', durationTo: '',
         companyName: '', organizationAddress: '', mentorName: '', mentorDesignation: '',
         mentorContact: '', mentorEmail: '', addresseeName: '', addresseeDesignation: '',
         addresseeContact: '', addresseeEmail: '', offerLetter: null, statementOfObjective: null,
-        mandatoryDocument: null, studentMessage: ''
+        mandatoryDocument: null, nocFormat: null, studentMessage: ''
       });
       fetchApplications();
       setActiveTab('dashboard');
@@ -141,6 +142,7 @@ const StudentDashboard = () => {
       rollNumber: app.rollNumber || '',
       degreeCourse: app.degreeCourse || 'B.Tech',
       branch: app.branch || '',
+      currentYear: app.currentYear || '3rd Year',
       yearSession: app.yearSession || '',
       latestCPI: app.latestCPI || '',
       contactNo: app.contactNo || '',
@@ -160,6 +162,7 @@ const StudentDashboard = () => {
       offerLetter: null,
       statementOfObjective: null,
       mandatoryDocument: null,
+      nocFormat: null,
       studentMessage: ''
     });
     setActiveTab('apply');
@@ -252,6 +255,7 @@ const StudentDashboard = () => {
                     {app.mandatoryDocument && <a href={formatFileUrl(app.mandatoryDocument)} target="_blank" rel="noreferrer" className="inline-flex items-center text-rose-600 font-bold hover:text-rose-800 transition-colors"><svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> View SOP/Marksheet</a>}
                     {app.offerLetter && <a href={formatFileUrl(app.offerLetter)} target="_blank" rel="noreferrer" className="inline-flex items-center text-indigo-600 font-bold hover:text-indigo-800 transition-colors"><svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> View Offer Letter</a>}
                     {app.statementOfObjective && <a href={formatFileUrl(app.statementOfObjective)} target="_blank" rel="noreferrer" className="inline-flex items-center text-indigo-600 font-bold hover:text-indigo-800 transition-colors"><svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> View Statement</a>}
+                    {app.nocFormat && <a href={formatFileUrl(app.nocFormat)} target="_blank" rel="noreferrer" className="inline-flex items-center text-indigo-600 font-bold hover:text-indigo-800 transition-colors"><svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> View NOC Format</a>}
                   </div>
                 </div>
 
@@ -315,6 +319,17 @@ const StudentDashboard = () => {
               <input type="text" name="branch" required placeholder="e.g. Computer Science" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium" value={formData.branch} onChange={handleInputChange} />
             </div>
             <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Current Year <span className="text-rose-500 ml-1">*</span></label>
+              <select name="currentYear" value={formData.currentYear} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium">
+                <option value="1st Year">1st Year</option>
+                <option value="2nd Year">2nd Year</option>
+                <option value="3rd Year">3rd Year</option>
+                <option value="4th Year">4th Year</option>
+                <option value="5th Year">5th Year</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">Year / Session <span className="text-rose-500 ml-1">*</span></label>
               <input type="text" name="yearSession" placeholder="e.g. 2023-2024" required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium" value={formData.yearSession} onChange={handleInputChange} />
             </div>
@@ -363,7 +378,7 @@ const StudentDashboard = () => {
             <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
               {/* Section 4: Contact Person / Mentor Details */}
               <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4">
-                <h3 className="font-extrabold text-sm text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2 mb-2">Mentor / H.O.D. Details</h3>
+                <h3 className="font-extrabold text-sm text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2 mb-2">Contact Person/ Mentor / H.O.D. Details</h3>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Name (Mr./Ms./Dr./Prof.) <span className="text-rose-500 ml-1">*</span></label>
                   <input type="text" name="mentorName" required className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.mentorName} onChange={handleInputChange} />
@@ -386,20 +401,20 @@ const StudentDashboard = () => {
               <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4">
                 <h3 className="font-extrabold text-sm text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2 mb-2">Addressee Details</h3>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Name (Mr./Ms./Dr./Prof.) <span className="text-rose-500 ml-1">*</span></label>
-                  <input type="text" name="addresseeName" required className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.addresseeName} onChange={handleInputChange} />
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Name (Mr./Ms./Dr./Prof.) <span className="text-slate-400 font-normal ml-1">(Optional)</span></label>
+                  <input type="text" name="addresseeName" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.addresseeName} onChange={handleInputChange} />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Designation <span className="text-rose-500 ml-1">*</span></label>
-                  <input type="text" name="addresseeDesignation" required className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.addresseeDesignation} onChange={handleInputChange} />
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Designation <span className="text-slate-400 font-normal ml-1">(Optional)</span></label>
+                  <input type="text" name="addresseeDesignation" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.addresseeDesignation} onChange={handleInputChange} />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Contact No. <span className="text-rose-500 ml-1">*</span></label>
-                  <input type="text" name="addresseeContact" required className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.addresseeContact} onChange={handleInputChange} />
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Contact No. <span className="text-slate-400 font-normal ml-1">(Optional)</span></label>
+                  <input type="text" name="addresseeContact" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.addresseeContact} onChange={handleInputChange} />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">E-mail <span className="text-rose-500 ml-1">*</span></label>
-                  <input type="email" name="addresseeEmail" required className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.addresseeEmail} onChange={handleInputChange} />
+                  <label className="block text-sm font-bold text-slate-700 mb-2">E-mail <span className="text-slate-400 font-normal ml-1">(Optional)</span></label>
+                  <input type="email" name="addresseeEmail" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.addresseeEmail} onChange={handleInputChange} />
                 </div>
               </div>
             </div>
@@ -420,6 +435,11 @@ const StudentDashboard = () => {
             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 border-dashed transition-all hover:bg-slate-100/50">
               <label className="block text-sm font-bold text-slate-700 mb-2">Offer Letter <span className="text-slate-400 font-normal ml-1">(Optional PDF)</span></label>
               <input type="file" accept="application/pdf" className="w-full file:mr-4 file:py-2.5 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all cursor-pointer text-slate-600" onChange={e => setFormData({ ...formData, offerLetter: e.target.files[0] })} />
+            </div>
+
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 border-dashed transition-all hover:bg-slate-100/50">
+              <label className="block text-sm font-bold text-slate-700 mb-2">Required Format of NOC <span className="text-slate-400 font-normal ml-1">(Optional PDF)</span></label>
+              <input type="file" accept="application/pdf" className="w-full file:mr-4 file:py-2.5 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all cursor-pointer text-slate-600" onChange={e => setFormData({ ...formData, nocFormat: e.target.files[0] })} />
             </div>
 
             {/* Student Message */}

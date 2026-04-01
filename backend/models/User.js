@@ -13,4 +13,6 @@ const userSchema = new mongoose.Schema({
   rollNumber: { type: String, required: false } // Required for Student
 }, { timestamps: true });
 
+userSchema.index({ role: 1 });
+
 module.exports = mongoose.model('User', userSchema);

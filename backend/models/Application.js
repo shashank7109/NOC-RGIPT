@@ -31,7 +31,8 @@ const applicationSchema = new mongoose.Schema({
     type: String,
     enum: [
       'SUBMITTED', 'UNDER_REVIEW_DEPT', 'REJECTED_DEPT', 'APPROVED_DEPT',
-      'UNDER_REVIEW_HEAD', 'REJECTED_HEAD', 'APPROVED_FINAL', 'READY_FOR_COLLECTION', 'COLLECTED'
+      'UNDER_REVIEW_HEAD', 'REJECTED_HEAD',
+      'READY_FOR_COLLECTION', 'COLLECTED'
     ],
     default: 'SUBMITTED'
   },
@@ -54,5 +55,10 @@ const applicationSchema = new mongoose.Schema({
   rejectedAt: { type: Date },
   rejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 }, { timestamps: true });
+
+// Indexes for common query patterns
+applicationSchema.index({ studentId: 1, status: 1 });
+applicationSchema.index({ departmentId: 1, status: 1 });
+applicationSchema.index({ status: 1 });
 
 module.exports = mongoose.model('Application', applicationSchema);

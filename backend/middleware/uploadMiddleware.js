@@ -10,29 +10,32 @@ if (!fs.existsSync(uploadDir)) {
 
 const storage = multer.diskStorage({
   destination(req, file, cb) {
-    cb(null, uploadDir); 
+    cb(null, uploadDir);
   },
   filename(req, file, cb) {
-    cb(null, `${Date.now()}-${file.originalname}`);
+    // Sanitize original filename to avoid path traversal
+    const safeName = path.basename(file.originalname).replace(/[^a-zA-Z0-9._-]/g, '_');
+    cb(null, `${Date.now()}-${safeName}`);
   }
 });
 
 function checkFileType(file, cb) {
-  const filetypes = /pdf/;
-  const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = filetypes.test(file.mimetype);
+  const allowedExtensions = /\.pdf$/i;
+  const allowedMimeType = 'application/pdf';
 
-  if (extname && mimetype) {
+  const validExt = allowedExtensions.test(file.originalname);
+  const validMime = file.mimetype === allowedMimeType;
+
+  if (validExt && validMime) {
     return cb(null, true);
-  } else {
-    cb('Error: PDFs Only!');
   }
+  cb(new Error('Only PDF files are allowed.'));
 }
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5000000 }, // 5MB max
-  fileFilter: function (req, file, cb) {
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter(req, file, cb) {
     checkFileType(file, cb);
   }
 });

@@ -8,4 +8,6 @@ const applicationLogSchema = new mongoose.Schema({
   remarks: { type: String, default: '' }
 }, { timestamps: true });
 
+applicationLogSchema.index({ applicationId: 1 });
+
 module.exports = mongoose.model('ApplicationLog', applicationLogSchema);

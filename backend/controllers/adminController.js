@@ -48,8 +48,15 @@ const createOrUpdateRoutingConfig = async (req, res) => {
 
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password').populate('departmentId', 'name code');
-    res.json(users);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      User.find().select('-password').populate('departmentId', 'name code').skip(skip).limit(limit),
+      User.countDocuments()
+    ]);
+    res.json({ users, total, page, pages: Math.ceil(total / limit) });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

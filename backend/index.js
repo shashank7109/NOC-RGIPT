@@ -5,30 +5,57 @@ const dotenv = require('dotenv');
 const path = require('path');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
+dotenv.config();
+
+// --- Startup Guards ---
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL ERROR: JWT_SECRET is not defined. Set it in your .env file.');
+  process.exit(1);
+}
+
 // Route imports
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const officerRoutes = require('./routes/officerRoutes');
 
-dotenv.config();
+// Rate limiter
+const { globalLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// --- Core Middleware ---
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  credentials: true,
+}));
+app.use(globalLimiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Routes
+// --- Routes ---
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/officer', officerRoutes);
 
-// Database connection
-const connectDB = async () => {
+// --- 404 Handler ---
+app.use((req, res) => {
+  res.status(404).json({ message: `Route ${req.originalUrl} not found` });
+});
+
+// --- Global Error Handler (must be last) ---
+app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
+  console.error(err.stack);
+  const status = err.statusCode || err.status || 500;
+  res.status(status).json({ message: err.message || 'Internal Server Error' });
+});
+
+// --- Database Connection + Server Startup ---
+// HTTP server only starts AFTER DB is confirmed connected to prevent
+// requests hitting the app before Mongoose is ready.
+const startServer = async () => {
   try {
     let mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || '';
     if (process.env.USE_IN_MEMORY_DB === 'true' || !mongoUri) {
@@ -38,15 +65,15 @@ const connectDB = async () => {
     }
     await mongoose.connect(mongoUri);
     console.log('MongoDB Connected');
+
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
   } catch (error) {
-    console.error(`Error: ${error.message}`);
+    console.error(`Startup Error: ${error.message}`);
     process.exit(1);
   }
 };
 
-connectDB();
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+startServer();

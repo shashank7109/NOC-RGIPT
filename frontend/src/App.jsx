@@ -4,7 +4,6 @@ import { AuthContext } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import { Toaster } from 'react-hot-toast';
 
-// Placeholder Pages
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -13,10 +12,18 @@ import OfficerDashboard from './pages/OfficerDashboard';
 import TNPHeadDashboard from './pages/TNPHeadDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
+// Styled full-screen loading spinner
+const LoadingScreen = () => (
+  <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 gap-4">
+    <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+    <p className="text-slate-500 font-semibold text-sm tracking-wide">Loading RGIPT NOC Portal...</p>
+  </div>
+);
+
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
   if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/" replace />;
 
@@ -26,7 +33,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 function App() {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading Application...</div>;
+  if (loading) return <LoadingScreen />;
 
   return (
     <Router>

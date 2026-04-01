@@ -5,29 +5,40 @@ import { toast } from 'react-hot-toast';
 const AdminDashboard = () => {
     const [departments, setDepartments] = useState([]);
     const [newDept, setNewDept] = useState({ name: '', code: '' });
-
     const [routings, setRoutings] = useState([]);
     const [newRouting, setNewRouting] = useState({ departmentId: '', primaryApproverEmail: '', roleType: 'tnp_coordinator' });
-
     const [roleAssignForm, setRoleAssignForm] = useState({ email: '', role: 'DeptOfficer', departmentId: '' });
+    const [fetching, setFetching] = useState(true);
 
     useEffect(() => {
+        document.title = 'RGIPT NOC — Admin Dashboard';
         fetchDepartments();
         fetchRoutings();
     }, []);
 
     const fetchDepartments = async () => {
-        const res = await api.get('/admin/departments');
-        setDepartments(res.data);
-        if (res.data.length > 0) {
-            setNewRouting(prev => ({ ...prev, departmentId: res.data[0]._id }));
-            setRoleAssignForm(prev => ({ ...prev, departmentId: res.data[0]._id }));
+        try {
+            setFetching(true);
+            const res = await api.get('/admin/departments');
+            setDepartments(res.data);
+            if (res.data.length > 0) {
+                setNewRouting(prev => ({ ...prev, departmentId: res.data[0]._id }));
+                setRoleAssignForm(prev => ({ ...prev, departmentId: res.data[0]._id }));
+            }
+        } catch (error) {
+            toast.error('Failed to load departments');
+        } finally {
+            setFetching(false);
         }
     };
 
     const fetchRoutings = async () => {
-        const res = await api.get('/admin/routing');
-        setRoutings(res.data);
+        try {
+            const res = await api.get('/admin/routing');
+            setRoutings(res.data);
+        } catch (error) {
+            toast.error('Failed to load routing configurations');
+        }
     };
 
     const handleCreateDept = async (e) => {

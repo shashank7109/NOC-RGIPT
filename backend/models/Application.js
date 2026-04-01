@@ -40,7 +40,7 @@ const applicationSchema = new mongoose.Schema({
   // Documents
   offerLetter: { type: String, required: false },
   statementOfObjective: { type: String, required: false },
-  mandatoryDocument: { type: String, required: false },
+  mandatoryDocument: { type: String, required: true },
   nocFormat: { type: String, required: false },
   studentMessage: { type: String, default: '' },
   remarks: { type: String, default: '' },

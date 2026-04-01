@@ -2,6 +2,7 @@ const Application = require('../models/Application');
 const ApplicationLog = require('../models/ApplicationLog');
 const sendEmail = require('../utils/sendEmail');
 const User = require('../models/User');
+const { sendNOCStatusEmail } = require('../utils/emailService');
 
 const getOfficerApplications = async (req, res) => {
   try {
@@ -43,7 +44,7 @@ const updateApplicationStatus = async (req, res) => {
     const { id } = req.params;
     const { action, remarks } = req.body; 
     
-    const application = await Application.findById(id).populate('studentId', 'email');
+    const application = await Application.findById(id).populate('studentId', 'name email');
     if (!application) return res.status(404).json({ message: 'Not found' });
 
     let newStatus = application.status;
@@ -86,16 +87,23 @@ const updateApplicationStatus = async (req, res) => {
       remarks
     });
 
-    // Notify student
-    try {
-      await sendEmail({
-        email: application.studentId.email,
-        subject: `NOC Application Status Update: ${newStatus}`,
-        message: `Your NOC Application status has been updated to ${newStatus}. Remarks: ${remarks || 'None'}`
-      });
-    } catch (emailError) {
-      console.error('Failed to send status update email:', emailError.message);
-    }
+    // Notify student (fire-and-forget)
+    (async () => {
+      try {
+        const actor = isHead ? 'TNP Head' : 'Department Officer';
+        const effectiveStatus = application.status;
+        await sendNOCStatusEmail({
+          studentEmail: application.studentId.email,
+          studentName: application.studentId.name,
+          companyName: application.companyName,
+          newStatus: effectiveStatus,
+          remarks,
+          actionByRole: actor
+        });
+      } catch (emailError) {
+        console.error('Failed to send status update email:', emailError.message);
+      }
+    })();
 
     res.json(application);
   } catch (error) {

@@ -16,10 +16,10 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
-              <Link to="/" className="text-xl font-bold flex items-center gap-3 text-blue-900">
-                <img src="/rgipt_logo.png" alt="RGIPT Logo" className="h-10 w-auto" />
-                <span className="hidden sm:block">RGIPT NOC Portal</span>
-              </Link>
+            <Link to="/" className="text-xl font-bold flex items-center gap-3 text-blue-900">
+              <img src="/rgipt_logo.png" alt="RGIPT Logo" className="h-10 w-auto" />
+              <span className="hidden sm:block">RGIPT NOC Portal</span>
+            </Link>
           </div>
           <div className="flex items-center space-x-4">
             {user ? (

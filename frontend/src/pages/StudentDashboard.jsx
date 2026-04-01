@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 const ExpandedDetails = ({ app }) => (
   <div className="mt-6 p-6 bg-slate-50 border border-slate-200 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-sm text-slate-700 animate-fade-in-up">
@@ -100,13 +101,13 @@ const StudentDashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.mandatoryDocument) {
-      alert('Please upload the mandatory SOP or Previous Semester Marksheet');
+      toast.error('Please upload the mandatory SOP or Previous Semester Marksheet');
       return;
     }
     setLoading(true);
     const data = new FormData();
     Object.keys(formData).forEach(key => {
-      if (!['offerLetter', 'statementOfObjective', 'mandatoryDocument'].includes(key)) {
+      if (!['offerLetter', 'statementOfObjective', 'mandatoryDocument', 'nocFormat'].includes(key)) {
         data.append(key, formData[key]);
       }
     });
@@ -117,7 +118,7 @@ const StudentDashboard = () => {
 
     try {
       await api.post('/student/apply', data, { headers: { 'Content-Type': 'multipart/form-data' } });
-      alert('Application submitted successfully');
+      toast.success('Application submitted successfully');
       setFormData({
         departmentId: departments.length > 0 ? departments[0]._id : '',
         rollNumber: '', degreeCourse: 'B.Tech', branch: '', currentYear: '3rd Year', yearSession: '', latestCPI: '', contactNo: '',
@@ -130,7 +131,7 @@ const StudentDashboard = () => {
       fetchApplications();
       setActiveTab('dashboard');
     } catch (error) {
-      alert(error.response?.data?.message || 'Error applying for NOC');
+      toast.error(error.response?.data?.message || 'Error applying for NOC');
     } finally {
       setLoading(false);
     }
@@ -282,181 +283,237 @@ const StudentDashboard = () => {
         </div>
       ) : (
         /* Application Form Tab */
-        <div id="noc-form-section" className="bg-white p-8 sm:p-12 rounded-[2rem] shadow-xl border border-slate-100 scroll-mt-24">
-          <div className="mb-10 text-center">
-            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Requisition Form for NOC</h2>
-            <p className="text-slate-500 mt-3 font-medium max-w-2xl mx-auto">Fill out the detailed application below. Mandatory fields are marked with a red asterisk.<span className="text-rose-500 font-bold ml-1">*</span></p>
+        <div id="noc-form-section" className="space-y-10 animate-fade-in-up">
+          <div className="text-center">
+            <h2 className="text-4xl font-black text-slate-900 tracking-tight">Requisition Form for NOC</h2>
+            <p className="text-slate-500 mt-3 font-bold text-lg max-w-2xl mx-auto">Fill out the detailed application below. Mandatory fields marked with <span className="text-rose-500">*</span></p>
           </div>
 
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
 
-            {/* Section 1: Academic Details */}
-            <div className="md:col-span-2"><h3 className="font-extrabold text-lg text-indigo-900 uppercase tracking-wider border-b-2 border-slate-100 pb-2 mb-2">1. Academic & Student Details</h3></div>
+            {/* Section 1: Academic & Student Details */}
+            <div className="bg-white shadow-sm border border-slate-100 rounded-2xl p-8 space-y-6">
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-4 mb-2">
+                <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600 font-black text-sm">1</div>
+                <h3 className="font-black text-xl text-slate-800 uppercase tracking-tight">Academic & Student Details</h3>
+              </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Select Department <span className="text-rose-500 ml-1">*</span></label>
-              <select name="departmentId" value={formData.departmentId} onChange={handleInputChange} required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium text-slate-800">
-                {departments.map(dept => (
-                  <option key={dept._id} value={dept._id}>{dept.name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Roll Number <span className="text-rose-500 ml-1">*</span></label>
-              <input type="text" name="rollNumber" placeholder="e.g. 21CS101" required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium" value={formData.rollNumber} onChange={handleInputChange} />
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Select Department <span className="text-rose-500">*</span></label>
+                  <select name="departmentId" value={formData.departmentId} onChange={handleInputChange} required className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold">
+                    {departments.map(dept => (
+                      <option key={dept._id} value={dept._id}>{dept.name}</option>
+                    ))}
+                  </select>
+                </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Degree / Course <span className="text-rose-500 ml-1">*</span></label>
-              <select name="degreeCourse" value={formData.degreeCourse} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium">
-                <option value="B.Tech">B.Tech</option>
-                <option value="MBA">MBA</option>
-                <option value="M.Tech">M.Tech</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Branch <span className="text-rose-500 ml-1">*</span></label>
-              <input type="text" name="branch" required placeholder="e.g. Computer Science" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium" value={formData.branch} onChange={handleInputChange} />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Current Year <span className="text-rose-500 ml-1">*</span></label>
-              <select name="currentYear" value={formData.currentYear} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium">
-                <option value="1st Year">1st Year</option>
-                <option value="2nd Year">2nd Year</option>
-                <option value="3rd Year">3rd Year</option>
-                <option value="4th Year">4th Year</option>
-                <option value="5th Year">5th Year</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Year / Session <span className="text-rose-500 ml-1">*</span></label>
-              <input type="text" name="yearSession" placeholder="e.g. 2023-2024" required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium" value={formData.yearSession} onChange={handleInputChange} />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Latest CPI <span className="text-rose-500 ml-1">*</span></label>
-              <input type="number" step="0.01" name="latestCPI" required placeholder="e.g. 8.5" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium" value={formData.latestCPI} onChange={handleInputChange} />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-bold text-slate-700 mb-2">Mobile / Contact No. <span className="text-rose-500 ml-1">*</span></label>
-              <input type="text" name="contactNo" required placeholder="10-digit number" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium" value={formData.contactNo} onChange={handleInputChange} />
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Roll Number <span className="text-rose-500">*</span></label>
+                  <input type="text" name="rollNumber" placeholder="e.g. 21CS101" required className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.rollNumber} onChange={handleInputChange} />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Degree / Course <span className="text-rose-500">*</span></label>
+                  <select name="degreeCourse" value={formData.degreeCourse} onChange={handleInputChange} className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold">
+                    <option value="B.Tech">B.Tech</option>
+                    <option value="MBA">MBA</option>
+                    <option value="M.Tech">M.Tech</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Branch <span className="text-rose-500">*</span></label>
+                  <input type="text" name="branch" required placeholder="e.g. Computer Science" className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.branch} onChange={handleInputChange} />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Current Year <span className="text-rose-500">*</span></label>
+                  <select name="currentYear" value={formData.currentYear} onChange={handleInputChange} className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold">
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                    <option value="3rd Year">3rd Year</option>
+                    <option value="4th Year">4th Year</option>
+                    <option value="5th Year">5th Year</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Year / Session <span className="text-rose-500">*</span></label>
+                  <input type="text" name="yearSession" placeholder="e.g. 2023-2024" required className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.yearSession} onChange={handleInputChange} />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Latest CPI <span className="text-rose-500">*</span></label>
+                  <input type="number" step="0.01" name="latestCPI" required placeholder="e.g. 8.5" className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.latestCPI} onChange={handleInputChange} />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Mobile / Contact No. <span className="text-rose-500">*</span></label>
+                  <input type="text" name="contactNo" required placeholder="10-digit number" className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.contactNo} onChange={handleInputChange} />
+                </div>
+              </div>
             </div>
 
             {/* Section 2: Internship Details */}
-            <div className="md:col-span-2 mt-8"><h3 className="font-extrabold text-lg text-indigo-900 uppercase tracking-wider border-b-2 border-slate-100 pb-2 mb-2">2. Internship Details</h3></div>
+            <div className="bg-white shadow-sm border border-slate-100 rounded-2xl p-8 space-y-6">
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-4 mb-2">
+                <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600 font-black text-sm">2</div>
+                <h3 className="font-black text-xl text-slate-800 uppercase tracking-tight">Internship Details</h3>
+              </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-bold text-slate-700 mb-2">Type of Internship Programme <span className="text-rose-500 ml-1">*</span></label>
-              <select name="internshipType" value={formData.internshipType} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium">
-                <option value="Embedded Internship (14 weeks duration)">B.Tech - Embedded Internship (14 weeks duration)</option>
-                <option value="Regular Internship (6 weeks duration)">B.Tech - Regular Internship (6 weeks duration)</option>
-                <option value="Regular Internship (6-8 weeks duration)">MBA - Regular Internship (6-8 weeks duration)</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Duration From <span className="text-rose-500 ml-1">*</span></label>
-              <input type="date" name="durationFrom" required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium" value={formData.durationFrom} onChange={handleInputChange} />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Duration To <span className="text-rose-500 ml-1">*</span></label>
-              <input type="date" name="durationTo" required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium" value={formData.durationTo} onChange={handleInputChange} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Type of Internship Programme <span className="text-rose-500">*</span></label>
+                  <select name="internshipType" value={formData.internshipType} onChange={handleInputChange} className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold">
+                    <option value="Embedded Internship (14 weeks duration)">B.Tech - Embedded Internship (14 weeks)</option>
+                    <option value="Regular Internship (6 weeks duration)">B.Tech - Regular Internship (6 weeks)</option>
+                    <option value="MBA Internship (6-8 weeks duration)">MBA - Summer Internship (6-8 weeks)</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Duration From <span className="text-rose-500">*</span></label>
+                  <input type="date" name="durationFrom" required className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.durationFrom} onChange={handleInputChange} />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Duration To <span className="text-rose-500">*</span></label>
+                  <input type="date" name="durationTo" required className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.durationTo} onChange={handleInputChange} />
+                </div>
+              </div>
             </div>
 
             {/* Section 3: Organization Details */}
-            <div className="md:col-span-2 mt-8"><h3 className="font-extrabold text-lg text-indigo-900 uppercase tracking-wider border-b-2 border-slate-100 pb-2 mb-2">3. Organization Details</h3></div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Organization Name <span className="text-rose-500 ml-1">*</span></label>
-              <input type="text" name="companyName" required placeholder="e.g. Google India" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium" value={formData.companyName} onChange={handleInputChange} />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-bold text-slate-700 mb-2">Organization Address <span className="text-rose-500 ml-1">*</span></label>
-              <textarea name="organizationAddress" required placeholder="Full physical address of internship location" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium resize-none" rows="3" value={formData.organizationAddress} onChange={handleInputChange}></textarea>
-            </div>
-
-            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-              {/* Section 4: Contact Person / Mentor Details */}
-              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4">
-                <h3 className="font-extrabold text-sm text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2 mb-2">Contact Person/ Mentor / H.O.D. Details</h3>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Name (Mr./Ms./Dr./Prof.) <span className="text-rose-500 ml-1">*</span></label>
-                  <input type="text" name="mentorName" required className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.mentorName} onChange={handleInputChange} />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Designation <span className="text-rose-500 ml-1">*</span></label>
-                  <input type="text" name="mentorDesignation" required className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.mentorDesignation} onChange={handleInputChange} />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Contact No. <span className="text-rose-500 ml-1">*</span></label>
-                  <input type="text" name="mentorContact" required className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.mentorContact} onChange={handleInputChange} />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">E-mail <span className="text-rose-500 ml-1">*</span></label>
-                  <input type="email" name="mentorEmail" required className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.mentorEmail} onChange={handleInputChange} />
-                </div>
+            <div className="bg-white shadow-sm border border-slate-100 rounded-2xl p-8 space-y-6">
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-4 mb-2">
+                <div className="w-8 h-8 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600 font-black text-sm">3</div>
+                <h3 className="font-black text-xl text-slate-800 uppercase tracking-tight">Organization Details</h3>
               </div>
 
-              {/* Section 5: Addressee Details */}
-              <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4">
-                <h3 className="font-extrabold text-sm text-slate-800 uppercase tracking-wider border-b border-slate-200 pb-2 mb-2">Addressee Details</h3>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Name (Mr./Ms./Dr./Prof.) <span className="text-slate-400 font-normal ml-1">(Optional)</span></label>
-                  <input type="text" name="addresseeName" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.addresseeName} onChange={handleInputChange} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Organization Name <span className="text-rose-500">*</span></label>
+                  <input type="text" name="companyName" required placeholder="e.g. Google India" className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.companyName} onChange={handleInputChange} />
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Designation <span className="text-slate-400 font-normal ml-1">(Optional)</span></label>
-                  <input type="text" name="addresseeDesignation" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.addresseeDesignation} onChange={handleInputChange} />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Contact No. <span className="text-slate-400 font-normal ml-1">(Optional)</span></label>
-                  <input type="text" name="addresseeContact" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.addresseeContact} onChange={handleInputChange} />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2">E-mail <span className="text-slate-400 font-normal ml-1">(Optional)</span></label>
-                  <input type="email" name="addresseeEmail" className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.addresseeEmail} onChange={handleInputChange} />
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Organization Address <span className="text-rose-500">*</span></label>
+                  <textarea name="organizationAddress" required placeholder="Full physical address of internship location" className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold resize-none" rows="3" value={formData.organizationAddress} onChange={handleInputChange}></textarea>
                 </div>
               </div>
             </div>
 
-            {/* Attachments */}
-            <div className="md:col-span-2 mt-8"><h3 className="font-extrabold text-lg text-indigo-900 uppercase tracking-wider border-b-2 border-slate-100 pb-2 mb-2">4. Attachments</h3></div>
+            {/* Section 4 & 5: Contact Person & Addressee Details */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Contact Person / Mentor Details */}
+              <div className="bg-white shadow-sm border border-slate-100 rounded-2xl p-8 space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-50 pb-4 mb-2">
+                  <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600 font-black text-sm">4</div>
+                  <h3 className="font-black text-base text-slate-800 uppercase tracking-tight">Mentor / H.O.D. Details</h3>
+                </div>
 
-            <div className="md:col-span-2 bg-slate-50 p-6 rounded-2xl border border-rose-200 border-dashed transition-all hover:bg-rose-50/50">
-              <label className="block text-sm font-bold text-slate-700 mb-2">SOP or Previous Semester Marksheet <span className="text-rose-500 ml-1">*</span></label>
-              <input type="file" accept="application/pdf" required className="w-full file:mr-4 file:py-2.5 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-rose-100 file:text-rose-700 hover:file:bg-rose-200 transition-all cursor-pointer text-slate-600" onChange={e => setFormData({ ...formData, mandatoryDocument: e.target.files[0] })} />
-              <p className="text-xs text-slate-500 mt-2 font-medium">Please upload a combined PDF of your SOP and Marksheet.</p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Full Name (Prefix required) <span className="text-rose-500">*</span></label>
+                    <input type="text" name="mentorName" required placeholder="e.g. Dr. Jane Smith" className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.mentorName} onChange={handleInputChange} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Designation <span className="text-rose-500">*</span></label>
+                    <input type="text" name="mentorDesignation" required placeholder="e.g. HR Manager" className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.mentorDesignation} onChange={handleInputChange} />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Contact No. <span className="text-rose-500">*</span></label>
+                      <input type="text" name="mentorContact" required className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.mentorContact} onChange={handleInputChange} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">E-mail <span className="text-rose-500">*</span></label>
+                      <input type="email" name="mentorEmail" required className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.mentorEmail} onChange={handleInputChange} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Addressee Details */}
+              <div className="bg-white shadow-sm border border-slate-100 rounded-2xl p-8 space-y-6">
+                <div className="flex items-center gap-3 border-b border-slate-50 pb-4 mb-2">
+                  <div className="w-8 h-8 bg-slate-50 rounded-lg flex items-center justify-center text-slate-600 font-black text-sm">5</div>
+                  <h3 className="font-black text-base text-slate-800 uppercase tracking-tight">Addressee Details (Optional)</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Name / Dept Name</label>
+                    <input type="text" name="addresseeName" placeholder="e.g. HR Department" className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.addresseeName} onChange={handleInputChange} />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Designation</label>
+                    <input type="text" name="addresseeDesignation" className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.addresseeDesignation} onChange={handleInputChange} />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Contact No.</label>
+                      <input type="text" name="addresseeContact" className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.addresseeContact} onChange={handleInputChange} />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">E-mail</label>
+                      <input type="email" name="addresseeEmail" className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-bold" value={formData.addresseeEmail} onChange={handleInputChange} />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 border-dashed transition-all hover:bg-slate-100/50">
-              <label className="block text-sm font-bold text-slate-700 mb-2">Statement of Objective <span className="text-slate-400 font-normal ml-1">(Optional PDF)</span></label>
-              <input type="file" accept="application/pdf" className="w-full file:mr-4 file:py-2.5 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all cursor-pointer text-slate-600" onChange={e => setFormData({ ...formData, statementOfObjective: e.target.files[0] })} />
-            </div>
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 border-dashed transition-all hover:bg-slate-100/50">
-              <label className="block text-sm font-bold text-slate-700 mb-2">Offer Letter <span className="text-slate-400 font-normal ml-1">(Optional PDF)</span></label>
-              <input type="file" accept="application/pdf" className="w-full file:mr-4 file:py-2.5 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all cursor-pointer text-slate-600" onChange={e => setFormData({ ...formData, offerLetter: e.target.files[0] })} />
+            {/* Section 6: Attachments */}
+            <div className="bg-white shadow-sm border border-slate-100 rounded-2xl p-8 space-y-8">
+              <div className="flex items-center gap-3 border-b border-slate-50 pb-4 mb-2">
+                <div className="w-8 h-8 bg-rose-50 rounded-lg flex items-center justify-center text-rose-600 font-black text-sm">6</div>
+                <h3 className="font-black text-xl text-slate-800 uppercase tracking-tight">Required Attachments</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="md:col-span-2 group">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 block">SOP & Previous Semester Marksheet (Combined PDF) <span className="text-rose-500">*</span></label>
+                  <div className="relative">
+                    <input type="file" accept="application/pdf" required className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={e => setFormData({ ...formData, mandatoryDocument: e.target.files[0] })} />
+                    <div className={`p-6 border-2 border-dashed rounded-2xl text-center transition-all ${formData.mandatoryDocument ? 'bg-emerald-50 border-emerald-300' : 'bg-slate-50 border-slate-200 group-hover:border-indigo-300 group-hover:bg-indigo-50/30'}`}>
+                      <svg className={`mx-auto h-10 w-10 mb-3 ${formData.mandatoryDocument ? 'text-emerald-500' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                      <p className="text-sm font-bold text-slate-700">{formData.mandatoryDocument ? formData.mandatoryDocument.name : 'Click or drag to upload combined PDF'}</p>
+                      <p className="text-xs text-slate-400 mt-1">SOP + Previous Marksheet (Max 5MB)</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="group">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 block">Offer Letter (Optional)</label>
+                  <div className="relative">
+                    <input type="file" accept="application/pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={e => setFormData({ ...formData, offerLetter: e.target.files[0] })} />
+                    <div className={`p-4 border-2 border-dashed rounded-xl text-center transition-all ${formData.offerLetter ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-200 group-hover:border-indigo-200 group-hover:bg-indigo-50/20'}`}>
+                      <p className="text-xs font-bold text-slate-700 truncate px-2">{formData.offerLetter ? formData.offerLetter.name : 'Upload PDF'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="group">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 block">Required NOC Format (Optional)</label>
+                  <div className="relative">
+                    <input type="file" accept="application/pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onChange={e => setFormData({ ...formData, nocFormat: e.target.files[0] })} />
+                    <div className={`p-4 border-2 border-dashed rounded-xl text-center transition-all ${formData.nocFormat ? 'bg-indigo-50 border-indigo-300' : 'bg-slate-50 border-slate-200 group-hover:border-indigo-200 group-hover:bg-indigo-50/20'}`}>
+                      <p className="text-xs font-bold text-slate-700 truncate px-2">{formData.nocFormat ? formData.nocFormat.name : 'Upload PDF'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Message for the Approver (Optional)</label>
+                  <textarea name="studentMessage" placeholder="e.g., Requesting urgent processing for visa requirements..." className="bg-slate-50 border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all duration-200 block w-full p-3 outline-none font-medium resize-none" rows="3" value={formData.studentMessage} onChange={handleInputChange}></textarea>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 border-dashed transition-all hover:bg-slate-100/50">
-              <label className="block text-sm font-bold text-slate-700 mb-2">Required Format of NOC <span className="text-slate-400 font-normal ml-1">(Optional PDF)</span></label>
-              <input type="file" accept="application/pdf" className="w-full file:mr-4 file:py-2.5 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 transition-all cursor-pointer text-slate-600" onChange={e => setFormData({ ...formData, nocFormat: e.target.files[0] })} />
-            </div>
-
-            {/* Student Message */}
-            <div className="md:col-span-2 mt-4">
-              <label className="block text-sm font-bold text-slate-700 mb-2">Any urgent message or remarks for the approver? <span className="text-slate-400 font-normal ml-1">(Optional)</span></label>
-              <textarea
-                name="studentMessage"
-                placeholder="e.g., I need to apply for this internship tomorrow, please process ASAP."
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm font-medium resize-none"
-                rows="3"
-                value={formData.studentMessage}
-                onChange={handleInputChange}
-              ></textarea>
-            </div>
-
-            <div className="md:col-span-2 mt-8 pt-6 border-t border-slate-100">
-              <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-lg font-extrabold py-4 px-8 rounded-xl transform transition-all duration-200 shadow-lg shadow-indigo-200 hover:-translate-y-1 disabled:opacity-50 disabled:hover:translate-y-0 disabled:shadow-none">
+            <div className="pt-6">
+              <button type="submit" disabled={loading} className="w-full bg-indigo-600 text-white font-black py-5 rounded-2xl hover:bg-indigo-700 hover:-translate-y-1 transition-all shadow-2xl shadow-indigo-100 uppercase tracking-widest text-lg disabled:opacity-50 disabled:hover:translate-y-0">
                 {loading ? 'Submitting Application...' : 'Submit NOC Requisition Form →'}
               </button>
             </div>

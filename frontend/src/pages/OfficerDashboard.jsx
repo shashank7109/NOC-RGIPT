@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, useMemo } from 'react';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
 
 const calculateDuration = (startDate, endDate) => {
   if (!startDate || !endDate) return null;
@@ -16,7 +17,7 @@ const calculateStudentYear = (rollNumber) => {
   const prefix = parseInt(rollNumber.substring(0, 2));
   if (isNaN(prefix)) return "N/A";
   const currentYearSuffix = new Date().getFullYear() % 100;
-  let yearNum = (currentYearSuffix - prefix) + 1; // Simplified logic for standard 4-year degree
+  let yearNum = (currentYearSuffix - prefix); 
   if (yearNum <= 0) yearNum = 1;
   if (yearNum > 4) yearNum = 4;
 
@@ -143,15 +144,15 @@ const ExpandedDetails = ({ app, isPending, remarks, setRemarks, handleAction }) 
           <p className="text-xs text-slate-500">{app.addresseeDesignation || 'N/A'} | {app.addresseeEmail || 'N/A'} | {app.addresseeContact || '-'}</p>
         </div>
 
-      {/* Application Remarks */}
-      {app.remarks && (
-        <div className="pt-6 border-t border-slate-200">
-          <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Approver Remarks</h4>
-          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-700 font-medium italic">
-            "{app.remarks}"
+        {/* Application Remarks */}
+        {app.remarks && (
+          <div className="pt-6 border-t border-slate-200">
+            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Approver Remarks</h4>
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-sm text-slate-700 font-medium italic">
+              "{app.remarks}"
+            </div>
           </div>
-        </div>
-      )}
+        )}
       </div>
 
       {/* Timeline Audit */}
@@ -222,6 +223,7 @@ const OfficerDashboard = () => {
   const [expandedId, setExpandedId] = useState(null);
 
   // Filter States
+  const [filterSearch, setFilterSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterYear, setFilterYear] = useState('All Years');
   const [filterDate, setFilterDate] = useState('');
@@ -256,9 +258,10 @@ const OfficerDashboard = () => {
       delete newRemarks[id];
       setRemarks(newRemarks);
       setExpandedId(null);
+      toast.success(`Application ${action.toLowerCase()}ed successfully!`);
       fetchApplications();
     } catch (error) {
-      alert(error.response?.data?.message || 'Error updating status');
+      toast.error(error.response?.data?.message || 'Error updating status');
     }
   };
 
@@ -276,6 +279,14 @@ const OfficerDashboard = () => {
     const approvedStatuses = ['UNDER_REVIEW_HEAD', 'READY_FOR_COLLECTION', 'COLLECTED', 'APPROVED', 'APPROVED_DEPT', 'APPROVED_FINAL'];
 
     return pastApps.filter(app => {
+      // Search Filter
+      if (filterSearch) {
+        const searchLower = filterSearch.toLowerCase();
+        const matchesName = app.studentId?.name?.toLowerCase().includes(searchLower);
+        const matchesRoll = app.rollNumber?.toLowerCase().includes(searchLower);
+        if (!matchesName && !matchesRoll) return false;
+      }
+
       // Status Filter
       if (filterStatus !== 'All') {
         if (filterStatus === 'Approved/Forwarded') {
@@ -300,7 +311,7 @@ const OfficerDashboard = () => {
 
       return true;
     });
-  }, [pastApps, filterStatus, filterYear, filterDate]);
+  }, [pastApps, filterStatus, filterYear, filterDate, filterSearch]);
 
   const historyStats = useMemo(() => {
     const approvedStatuses = ['UNDER_REVIEW_HEAD', 'READY_FOR_COLLECTION', 'COLLECTED', 'APPROVED', 'APPROVED_DEPT', 'APPROVED_FINAL'];
@@ -418,6 +429,19 @@ const OfficerDashboard = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Search student or roll..."
+                      className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500 outline-none transition-all w-48 sm:w-64"
+                      value={filterSearch}
+                      onChange={(e) => setFilterSearch(e.target.value)}
+                    />
+                  </div>
+
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}

@@ -30,7 +30,7 @@ app.use('/api/officer', officerRoutes);
 // Database connection
 const connectDB = async () => {
   try {
-    let mongoUri = process.env.MONGO_URI || '';
+    let mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || '';
     if (process.env.USE_IN_MEMORY_DB === 'true' || !mongoUri) {
       const mem = await MongoMemoryServer.create();
       mongoUri = mem.getUri();

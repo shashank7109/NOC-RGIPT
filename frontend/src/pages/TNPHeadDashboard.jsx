@@ -2,41 +2,7 @@ import React, { useState, useEffect, useContext, useMemo } from 'react';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-
-const formatDate = (dateString) => {
-  if (!dateString) return null;
-  return new Date(dateString).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-};
-
-const formatFileUrl = (dbPath) => {
-  if (!dbPath) return '#';
-  const cleanPath = dbPath.includes('uploads/')
-    ? dbPath.substring(dbPath.indexOf('uploads/'))
-    : dbPath;
-  return `http://localhost:5001/${cleanPath}`;
-};
-
-const calculateDuration = (startDate, endDate) => {
-  if (!startDate || !endDate) return null;
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const diffTime = Math.abs(end - start);
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return `${diffDays} Days`;
-};
-
-const calculateStudentYear = (rollNumber) => {
-  if (!rollNumber) return "N/A";
-  const prefix = parseInt(rollNumber.substring(0, 2));
-  if (isNaN(prefix)) return "N/A";
-  const currentYearSuffix = new Date().getFullYear() % 100;
-  let yearNum = (currentYearSuffix - prefix);
-  if (yearNum <= 0) yearNum = 1;
-  if (yearNum > 4) yearNum = 4;
-
-  const suffixes = ["th", "st", "nd", "rd", "th"];
-  return `${yearNum}${suffixes[yearNum] || "th"} Year`;
-};
+import { formatDate, formatFileUrl, calculateDuration, calculateStudentYear, formatTodayDate, getGreeting } from '../utils/helpers';
 
 const ExpandedDetails = ({ app }) => (
   <div className="mt-6 p-8 bg-slate-50 border border-slate-200 rounded-2xl space-y-8 animate-fade-in text-left">
@@ -283,36 +249,31 @@ const TNPHeadDashboard = () => {
   const [departments, setDepartments] = useState([]);
   const [remarks, setRemarks] = useState({});
   const [activeTab, setActiveTab] = useState('review');
+  const [fetching, setFetching] = useState(true);
 
-  // Filter States
   const [filterSearch, setFilterSearch] = useState('');
   const [filterDept, setFilterDept] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterYear, setFilterYear] = useState('All Years');
   const [filterDate, setFilterDate] = useState('');
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  };
-
-  const formatDate = () => {
-    const options = { weekday: 'long', month: 'long', day: 'numeric' };
-    return new Date().toLocaleDateString('en-US', options);
-  };
-
   useEffect(() => {
+    document.title = 'RGIPT NOC — TNP Head Dashboard';
     fetchApplications();
     fetchDepartments();
   }, []);
 
   const fetchApplications = async () => {
     try {
+      setFetching(true);
       const res = await api.get('/officer/applications');
       setApplications(res.data);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+      toast.error('Failed to load applications');
+    } finally {
+      setFetching(false);
+    }
   };
 
   const fetchDepartments = async () => {
@@ -320,7 +281,7 @@ const TNPHeadDashboard = () => {
       const res = await api.get('/admin/departments');
       setDepartments(res.data);
     } catch (e) { console.error(e); }
-  }
+  };
 
   const handleAction = async (id, action) => {
     try {
@@ -346,7 +307,7 @@ const TNPHeadDashboard = () => {
   }, [applications, user]);
 
   const filteredHistoryApps = useMemo(() => {
-    const approvedStatuses = ['READY_FOR_COLLECTION', 'COLLECTED', 'APPROVED_FINAL'];
+    const approvedStatuses = ['READY_FOR_COLLECTION', 'COLLECTED'];
 
     return pastApps.filter(app => {
       // Search Filter
@@ -384,7 +345,7 @@ const TNPHeadDashboard = () => {
   }, [pastApps, filterStatus, filterYear, filterDate, filterSearch, filterDept]);
 
   const historyStats = useMemo(() => {
-    const approvedStatuses = ['READY_FOR_COLLECTION', 'COLLECTED', 'APPROVED_FINAL'];
+    const approvedStatuses = ['READY_FOR_COLLECTION', 'COLLECTED'];
     return {
       total: filteredHistoryApps.length,
       approved: filteredHistoryApps.filter(a => approvedStatuses.includes(a.status)).length,
@@ -412,7 +373,7 @@ const TNPHeadDashboard = () => {
             <h1 className="text-3xl font-black text-slate-900 tracking-tight">
               {getGreeting()}, Head Officer
             </h1>
-            <p className="text-slate-500 mt-1 font-medium">{formatDate()}</p>
+            <p className="text-slate-500 mt-1 font-medium">{formatTodayDate()}</p>
           </div>
         </div>
 
@@ -444,7 +405,11 @@ const TNPHeadDashboard = () => {
 
         {activeTab === 'review' && (
           <div className="space-y-6">
-            {pendingApps.length === 0 ? (
+            {fetching ? (
+            <div className="flex justify-center py-16">
+              <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+            </div>
+          ) : pendingApps.length === 0 ? (
               <EmptyState
                 title="All Caught Up!"
                 message="No applications are currently waiting for your final review."

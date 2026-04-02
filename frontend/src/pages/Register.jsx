@@ -12,7 +12,7 @@ const Register = () => {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { login } = useContext(AuthContext);
+  const { setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -40,10 +40,11 @@ const Register = () => {
     setLoading(true);
     try {
       const res = await api.post('/auth/register', formData);
+      // Store token and set user directly from register response — no second API call needed
       localStorage.setItem('token', res.data.token);
-      await login(formData.email, formData.password);
+      setUser(res.data);
       toast.success('Registration successful!');
-      navigate('/student-dashboard');
+      navigate('/'); // root route handles role-based redirect
     } catch (err) {
       toast.error(err.response?.data?.message || 'Error during registration');
     } finally {

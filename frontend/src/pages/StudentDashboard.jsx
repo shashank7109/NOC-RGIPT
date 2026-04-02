@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
+import { formatDate, formatFileUrl, getGreeting, formatTodayDate } from '../utils/helpers';
 
 const ExpandedDetails = ({ app }) => (
   <div className="mt-6 p-6 bg-slate-50 border border-slate-200 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-sm text-slate-700 animate-fade-in-up">
@@ -26,19 +27,6 @@ const ExpandedDetails = ({ app }) => (
   </div>
 );
 
-const formatDate = (dateString) => {
-  if (!dateString) return null;
-  return new Date(dateString).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-};
-
-const formatFileUrl = (dbPath) => {
-  if (!dbPath) return '#';
-  const cleanPath = dbPath.includes('uploads/')
-    ? dbPath.substring(dbPath.indexOf('uploads/'))
-    : dbPath;
-  return `http://localhost:5001/${cleanPath}`;
-};
-
 const StudentDashboard = () => {
   const { user } = useContext(AuthContext);
   const [applications, setApplications] = useState([]);
@@ -56,16 +44,13 @@ const StudentDashboard = () => {
   const [loading, setLoading] = useState(false);
 
   const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 18) return 'Good afternoon';
     return 'Good evening';
   };
 
-  const formatDate = () => {
-    const options = { weekday: 'long', month: 'long', day: 'numeric' };
-    return new Date().toLocaleDateString('en-US', options);
-  };
+  const [fetching, setFetching] = useState(true);
 
   const stats = {
     total: applications.length,
@@ -75,13 +60,22 @@ const StudentDashboard = () => {
   };
 
   useEffect(() => {
+    document.title = 'RGIPT NOC — Student Dashboard';
     fetchApplications();
     fetchDepartments();
   }, []);
 
   const fetchApplications = async () => {
-    const res = await api.get('/student/applications');
-    setApplications(res.data);
+    try {
+      setFetching(true);
+      const res = await api.get('/student/applications');
+      // Backend returns { applications, total, page, pages } — extract the array
+      setApplications(res.data.applications ?? res.data);
+    } catch (e) {
+      console.error('Failed to fetch applications:', e);
+    } finally {
+      setFetching(false);
+    }
   };
 
   const fetchDepartments = async () => {
@@ -183,7 +177,7 @@ const StudentDashboard = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">{getGreeting()}, {user?.name}</h1>
-          <p className="text-slate-500 mt-1 font-medium">{formatDate()}</p>
+          <p className="text-slate-500 mt-1 font-medium">{formatTodayDate()}</p>
         </div>
       </div>
 

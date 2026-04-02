@@ -3,7 +3,11 @@
  * Import from here — do NOT copy-paste into individual pages.
  */
 
-const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5001/api').replace('/api', '');
+const API_BASE = (
+  import.meta.env.VITE_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  'http://localhost:5000/api'
+).replace('/api', '');
 
 /** Formats a date string to "2 Apr 2026" */
 export const formatDate = (dateString) => {

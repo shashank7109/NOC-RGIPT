@@ -2,8 +2,15 @@ const sendEmail = require('./utils/sendEmail');
 const dotenv = require('dotenv');
 dotenv.config();
 
+const recipient = process.env.TEST_EMAIL || process.env.SMTP_USER;
+
+if (!recipient) {
+  console.error('Set TEST_EMAIL (or SMTP_USER for legacy SMTP) before running this script.');
+  process.exit(1);
+}
+
 sendEmail({
-  email: process.env.SMTP_USER, // Send to themselves
+  email: recipient,
   subject: 'NOC Portal Test Email',
   message: 'Testing nodemailer configuration.'
 }).then(() => {

@@ -1,15 +1,41 @@
 const nodemailer = require('nodemailer');
 
+const mailTransportUrl = process.env.RESEND_SMTP_URL || process.env.SMTP_URL;
+const isUrlValue = (value) => /^smtps?:\/\//i.test(String(value || ''));
+
+const createTransporter = () => {
+  if (mailTransportUrl) {
+    if (isUrlValue(mailTransportUrl)) {
+      return nodemailer.createTransport(mailTransportUrl);
+    }
+
+    // Support users pasting a Resend API key into RESEND_SMTP_URL.
+    return nodemailer.createTransport({
+      host: 'smtp.resend.com',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'resend',
+        pass: mailTransportUrl,
+      },
+    });
+  }
+
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.mailtrap.io',
+    port: parseInt(process.env.SMTP_PORT, 10) || 587,
+    secure: parseInt(process.env.SMTP_PORT, 10) === 465,
+    auth: {
+      user: process.env.SMTP_USER || 'placeholder_user',
+      pass: process.env.SMTP_PASSWORD || 'placeholder_pass',
+    },
+  });
+};
+
 // Singleton transporter — created once on startup, reused for every email
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.mailtrap.io',
-  port: parseInt(process.env.SMTP_PORT, 10) || 587,
-  secure: parseInt(process.env.SMTP_PORT, 10) === 465,
-  auth: {
-    user: process.env.SMTP_USER || 'placeholder_user',
-    pass: process.env.SMTP_PASSWORD || 'placeholder_pass',
-  },
-});
+const transporter = createTransporter();
+
+const defaultFrom = process.env.MAIL_FROM || process.env.SMTP_FROM || 'NOC Portal <noreply@rgipt.ac.in>';
 
 /**
  * Escapes user-supplied content to prevent XSS in HTML emails.
@@ -31,7 +57,7 @@ const sendEmail = async ({ to, email, subject, text, message, html }) => {
   const body = text || message;
   try {
     await transporter.sendMail({
-      from: process.env.SMTP_FROM || 'NOC Portal <noreply@rgipt.ac.in>',
+      from: defaultFrom,
       to: recipient,
       subject,
       text: body,

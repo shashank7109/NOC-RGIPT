@@ -62,6 +62,26 @@ Start the backend server (using Nodemon for development):
 npx nodemon index.js
 ```
 
+### Render + UptimeRobot
+If you deploy the backend on Render, add an UptimeRobot monitor to keep the service warm and verify uptime.
+
+Use this monitor URL:
+```text
+https://<your-render-backend>.onrender.com/health
+```
+
+Recommended monitor settings:
+- Monitor type: HTTP(s)
+- Interval: 5 minutes
+- Expected status code: 200
+
+The endpoint returns a simple JSON payload and does not require authentication.
+
+Render service settings:
+- Root directory: `backend`
+- Build command: `npm install`
+- Start command: `npm start`
+
 ### 3. Frontend Setup
 Open a new terminal tab, navigate to the frontend directory, and install dependencies.
 ```bash
